@@ -1,10 +1,17 @@
-import { Resolver, Query, Mutation, Arg } from "type-graphql";
-import { Book } from "../models/Book";
+import { PubSubEngine } from "graphql-subscriptions";
+import { Resolver, Query, Mutation, Arg, Subscription, Root, PubSub, Publisher } from "type-graphql";
+import { Book, BookSubs } from "../models/Book";
 import { CreateBookInput } from "../inputs/CreateBookInput";
 import { UpdateBookInput } from "../inputs/UpdateBookInput";
 
 @Resolver()
 export class BookResolver {
+
+  @Subscription({ topics: "NOTIFICATIONS" })
+  normalSubscription(@Root() data: Book): Book {
+    return data
+  }
+
   @Query(() => [Book])
   books() {
     return Book.find();
@@ -16,9 +23,13 @@ export class BookResolver {
   }
 
   @Mutation(() => Book)
-  async createBook(@Arg("data") data: CreateBookInput) {
+  async createBook(
+    @Arg("data") data: CreateBookInput,
+    @PubSub("NOTIFICATIONS") publish: Publisher<Book>) {
+
     const book = Book.create(data);
     await book.save();
+    await publish(book);
     return book;
   }
 

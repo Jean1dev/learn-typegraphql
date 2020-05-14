@@ -20,3 +20,8 @@ export class Book extends BaseEntity {
   @Column({ default: false })
   isPublished: boolean;
 }
+
+export interface BookSubs {
+  title: string
+  author: string
+}
